@@ -1,0 +1,40 @@
+{
+  "name": "portfolio-backend",
+  "version": "1.0.0",
+  "description": "REST API backend for the portfolio frontend + admin panel (profile, projects, skills, experience, education, auth).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node scripts/seed.js",
+    "prerender": "node scripts/prerender.js"
+  },
+  "keywords": [
+    "portfolio",
+    "api",
+    "express",
+    "mongodb"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "jsdom": "^25.0.1",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.2.0",
+    "multer-s3": "^3.0.1",
+    "nodemailer": "^10.1.0",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
