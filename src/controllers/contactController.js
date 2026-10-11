@@ -44,8 +44,9 @@ const sendContactMessage = asyncHandler(async (req, res) => {
   // CAN control is the display name and the reply-to, so we put the
   // visitor's name front and center there instead - that's what shows when
   // you open the email, hover the sender, or hit reply.
+  try {
   await transporter.sendMail({
-    from: `"${name} (via Portfolio)" <${process.env.SMTP_USER}>`,
+    from: `"${name} (via Portfolio)" <${transporter.smtpUser}>`,
     to,
     replyTo: `"${name}" <${email}>`,
     subject: `${name} sent you a message: ${subject}`,
@@ -61,6 +62,15 @@ const sendContactMessage = asyncHandler(async (req, res) => {
       </div>
     `,
   });
+
+  } catch (err) {
+    // Full details go to the server log only; visitors get a clean message.
+    console.error('[mail] sendMail failed:', err.message);
+    return res.status(502).json({
+      success: false,
+      message: 'Sorry, your message could not be sent right now. Please try again later or email me directly.',
+    });
+  }
 
   res.json({ success: true, message: 'Message sent successfully.' });
 });
