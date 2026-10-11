@@ -27,7 +27,8 @@ const ProfileSchema = new mongoose.Schema(
     twitter: { type: String, default: '' },
     website: { type: String, default: '' },
     resumeUrl: { type: String, default: '' },
-    profilePicture: { type: String, default: '' }, // relative path e.g. "uploads/xyz.jpg"
+    profilePicture: { type: String, default: '' }, // picture shown in the DARK theme
+    profilePictureLight: { type: String, default: '' }, // picture shown in the LIGHT theme
   },
   { timestamps: true }
 );

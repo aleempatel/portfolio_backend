@@ -43,34 +43,48 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, data: profile, message: 'Profile saved.' });
 });
 
-// POST /api/profile/picture (protected, multipart/form-data field "picture")
-// Stored directly in the AWS S3 bucket - req.file.location is the public URL.
-const uploadPicture = asyncHandler(async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: 'No file uploaded. Use field name "picture".' });
-  }
-  let profile = await findProfileDoc();
-  if (profile && profile.profilePicture) await removeFromS3(profile.profilePicture);
+// Profile pictures: one for the dark theme (profilePicture) and one for the light
+// theme (profilePictureLight). If only one is uploaded the website uses it for both.
+// POST   /api/profile/picture        -> dark theme picture  (multipart field "picture")
+// POST   /api/profile/picture/light  -> light theme picture (multipart field "picture")
+// DELETE the same URLs to remove them. Files go straight to the AWS S3 bucket.
+function pictureHandlers(field, label) {
+  const upload = asyncHandler(async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded. Use field name "picture".' });
+    }
+    let profile = await findProfileDoc();
+    if (profile && profile[field]) await removeFromS3(profile[field]);
 
-  profile = await Profile.findOneAndUpdate(
-    {},
-    { profilePicture: req.file.location },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
+    profile = await Profile.findOneAndUpdate(
+      {},
+      { [field]: req.file.location },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
-  res.json({ success: true, data: profile, message: 'Profile picture updated.' });
-});
+    res.json({ success: true, data: profile, message: `${label} picture updated.` });
+  });
 
-const deletePicture = asyncHandler(async (_req, res) => {
-  const profile = await findProfileDoc();
-  if (!profile || !profile.profilePicture) {
-    return res.json({ success: true, data: profile || {}, message: 'No profile picture to remove.' });
-  }
-  await removeFromS3(profile.profilePicture);
-  profile.profilePicture = '';
-  await profile.save();
-  res.json({ success: true, data: profile, message: 'Profile picture removed.' });
-});
+  const remove = asyncHandler(async (_req, res) => {
+    const profile = await findProfileDoc();
+    if (!profile || !profile[field]) {
+      return res.json({ success: true, data: profile || {}, message: `No ${label.toLowerCase()} picture to remove.` });
+    }
+    await removeFromS3(profile[field]);
+    profile[field] = '';
+    await profile.save();
+    res.json({ success: true, data: profile, message: `${label} picture removed.` });
+  });
+
+  return { upload, remove };
+}
+
+const dark = pictureHandlers('profilePicture', 'Dark theme');
+const light = pictureHandlers('profilePictureLight', 'Light theme');
+const uploadPicture = dark.upload;
+const deletePicture = dark.remove;
+const uploadPictureLight = light.upload;
+const deletePictureLight = light.remove;
 
 // POST /api/profile/resume  (protected, multipart/form-data field "resume")
 const uploadResume = asyncHandler(async (req, res) => {
@@ -147,5 +161,5 @@ const deleteResume = asyncHandler(async (_req, res) => {
 });
 
 module.exports = {
-  getProfile, updateProfile, uploadPicture, deletePicture, uploadResume, deleteResume, downloadResume, viewResume,
+  getProfile, updateProfile, uploadPicture, deletePicture, uploadPictureLight, deletePictureLight, uploadResume, deleteResume, downloadResume, viewResume,
 };
